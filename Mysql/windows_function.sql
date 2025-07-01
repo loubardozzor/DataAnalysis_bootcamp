@@ -44,14 +44,43 @@ JOIN employee_salary sal
 SELECT dem.employee_id,dem.first_name, dem.last_name,gender, salary,
 ROW_NUMBER() OVER(PARTITION BY gender ORDER BY salary DESC) AS rank_number,
 RANK() OVER(PARTITION BY gender ORDER BY salary DESC) rank_num,
-DENSE_RANK() OVER(PARTITION BY gender ORDER BY salary DESC)
+DENSE_RANK() OVER(PARTITION BY gender ORDER BY salary DESC) as dens_rank
 FROM employee_demographics dem
 JOIN employee_salary sal
 	ON dem.employee_id = sal.employee_id;
     
-
-
     
     
+
+SELECT gender, birth_date, age,
+	SUM(age) over(partition by gender order by birth_date) as totale_cum
+FROM employee_demographics;
+    
+
+
+select first_name, last_name, occupation, salary,
+avg(salary) over( partition by occupation) as sal_per_occupation
+from employee_salary sal;
+
+SELECT dem.gender, dem.first_name, dem.last_name,
+avg(salary) over(partition by gender)
+FROM employee_demographics dem JOIN employee_salary sal
+	ON dem.employee_id = sal.employee_id;
+    
+SELECT sal.first_name, sal.last_name,sal.salary, dep.department_name,
+avg(sal.salary) over ( partition by dep.department_name) as salary_per_department
+FROM
+employee_salary sal JOIN parks_departments dep
+ON sal.dept_id = dep.department_id
+;
+    
+
+SELECT dep.department_name, avg(sal.salary)
+FROM
+employee_salary sal JOIN parks_departments dep
+ON sal.dept_id = dep.department_id
+group by dep.department_name
+
+
 
     

@@ -20,3 +20,4 @@ CASE
 	WHEN dept_id = 6 THEN salary * .10
 END AS Bonus
 FROM employee_salary as emp
+
