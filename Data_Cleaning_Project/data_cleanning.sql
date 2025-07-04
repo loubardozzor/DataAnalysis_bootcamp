@@ -117,23 +117,85 @@ UPDATE layoffs_staging2
 SET industry = 'Crypto'
 WHERE industry like 'Crypto%';
 
--- 
+-- cleanining a country column
+UPDATE layoffs_staging2
+SET country = TRIM(TRAILING '.' FROM country)
+WHERE country LIKE 'united States%';
+ 
+SELECT country
+FROM layoffs_staging2
+WHERE country like 'united States%';
 
-with industry_cte as(
-select industry
-from layoffs_staging
-)
+SELECT `date`, STR_TO_DATE(`date`,'%m/%d/%Y')
+FROM layoffs_staging2;
+
+UPDATE layoffs_staging2
+SET `date` = STR_TO_DATE(`date`,'%m/%d/%Y');
+
+SELECT `date`
+FROM layoffs_staging2;
+
+ALTER TABLE layoffs_staging2 -- we modify the type of the date column from text to date type
+MODIFY COLUMN `date` date;
+
+-- deal with  null and blank value 
+
+SELECT *
+FROM layoffs_staging2
+WHERE total_laid_off IS NULL;
+
+SELECT *
+FROM layoffs_staging2
+WHERE industry IS NULL
+OR industry = '';
 
 
-update layoffs_staging2 
-set industry = industry_cte.industry;
+SELECT *
+FROM layoffs_staging2
+WHERE company = 'Airbnb';
+
+-- since there some blank value into industry column for AIrbnb company we are going to update this blank values a travel company
+-- how can we deal with the null values or blank value ? we are going to fill these null columns or value with the value in the table which has the same company ( for industry)
+-- example if we have two row with which both the company value Airbnb and for one the industry is blank and for another the industry is blank we are going to fill this blank we the value in the not null raw
+-- how can we do this ? --> with join 
+/*UPDATE layoffs_staging2 t1 
+JOIN layoffs_staging2 t2
+	ON t1.company = t2.company
+SET t1.industry = t2.industry
+WHERE t1.industry = ''
+AND t2.industry IS NOT NULL;*/ -- this doesnt work
+
+SELECT company, MAX(industry) as industry
+from layoffs_staging2
+WHERE industry IS NOT NULL AND industry != ''
+GROUP BY company;
+
+UPDATE layoffs_staging2 AS t1
+JOIN(SELECT company, MAX(industry) as industry
+from layoffs_staging2
+WHERE industry IS NOT NULL AND industry != ''
+GROUP BY company)AS t2 ON t1.company = t2.company
+SET t1.industry = t2.industry
+WHERE t1.industry IS NULL OR t1.industry = '';
+
+SELECT t1.company , t2.company, t1.industry, t2.industry 
+FROM layoffs_staging2 t1 
+JOIN layoffs_staging2 t2
+	ON t1.company = t2.company
+WHERE  t1.industry = ''
+AND t2.industry IS NOT NULL;
 
 
+DELETE 
+FROM layoffs_staging2
+WHERE total_laid_off IS NULL 
+AND percentage_laid_off IS NULL ;
 
+SELECT *
+FROM layoffs_staging2;
 
-
-
-
+ALTER TABLE layoffs_staging2
+DROP COLUMN row_num;
 
 
 
